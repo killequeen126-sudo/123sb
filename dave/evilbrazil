@@ -1,0 +1,1124 @@
+if game.PlaceId == 6403373529 or game.PlaceId == 7234087065 then
+    local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
+    local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
+    local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
+
+    local Window = Library:CreateWindow({
+        Title = 'Evil Barzil | by liaqe',
+        Center = true,
+        AutoShow = true,
+        TabPadding = 8,
+        MenuFadeTime = 0.2
+    })
+
+    local Tabs = {
+        teleport = Window:AddTab('teleport'),
+        ['UI Settings'] = Window:AddTab('UI Settings')
+    }
+
+    local tpgroup = Tabs.teleport:AddLeftGroupbox('teleport')
+    local btntext = ""
+    local btnfunc = nil
+
+    if game.PlaceId == 6403373529 then
+        btntext = 'teleport to barzil'
+        btnfunc = function()
+            local plr = game:GetService("Players").LocalPlayer
+            local char = plr.Character
+            if char then
+                local portal = workspace:FindFirstChild("Lobby") and workspace.Lobby:FindFirstChild("brazil") and workspace.Lobby.brazil:FindFirstChild("portal")
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if portal and hrp then
+                    firetouchinterest(hrp, portal, 0)
+                end
+            end
+        end
+    elseif game.PlaceId == 7234087065 then
+        btntext = 'teleport to evil barzil'
+        btnfunc = function()
+            local plr = game:GetService("Players").LocalPlayer
+            local char = plr.Character
+            if char then
+                local portal = workspace:FindFirstChild("Evil Barzil") and workspace["Evil Barzil"]:FindFirstChild("evilbarzil") and workspace["Evil Barzil"].evilbarzil:FindFirstChild("portal")
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if portal and hrp then
+                    firetouchinterest(hrp, portal, 0)
+                end
+            end
+        end
+    end
+
+    tpgroup:AddButton({
+        Text = btntext,
+        Func = btnfunc,
+        DoubleClick = false
+    })
+
+    local menugroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
+    menugroup:AddButton('Unload', function() Library:Unload() end)
+    menugroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true, Text = 'Menu keybind' })
+    Library.ToggleKeybind = Options.MenuKeybind 
+
+    ThemeManager:SetLibrary(Library)
+    ThemeManager:SetFolder('EvilBarzil')
+    ThemeManager:ApplyToTab(Tabs['UI Settings'])
+
+elseif game.PlaceId == 80420091630966 then
+    local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
+    local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
+    local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
+
+    local Window = Library:CreateWindow({
+        Title = 'Evil Barzil | by liaqe',
+        Center = true,
+        AutoShow = true,
+        TabPadding = 8,
+        MenuFadeTime = 0.2
+    })
+
+    local Tabs = {
+        main = Window:AddTab('main'),
+        ['UI Settings'] = Window:AddTab('UI Settings')
+    }
+
+    local players = game:GetService("Players")
+    local rf = game:GetService("ReplicatedFirst")
+    local rs = game:GetService("ReplicatedStorage")
+    local runS = game:GetService("RunService")
+    local lighting = game:GetService("Lighting")
+    local badgeS = game:GetService("BadgeService")
+    local plr = players.LocalPlayer
+
+    local flagph1 = false
+    local flagph2 = false
+    local flagph3 = false
+    local flagph4 = false
+    local readyph4 = false
+    local curspotindex = 1
+    local flagend = false
+    local kicking = false
+
+    local lockhb = nil
+    local function lockstate(char, targetCFrame)
+        if lockhb then lockhb:Disconnect() end
+        for _, p in pairs(char:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = false end
+        end
+        lockhb = runS.Heartbeat:Connect(function()
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
+                char.HumanoidRootPart.AssemblyAngularVelocity = Vector3.zero
+                char.HumanoidRootPart.CFrame = targetCFrame
+            end
+        end)
+    end
+
+    local function unlockstate(char)
+        if lockhb then lockhb:Disconnect(); lockhb = nil end
+        if char then
+            for _, p in pairs(char:GetDescendants()) do
+                if p:IsA("BasePart") and p.Name ~= "HumanoidRootPart" then 
+                    p.CanCollide = true 
+                end
+            end
+        end
+    end
+
+    local function waittool(toolName, timeout)
+        local t = tick()
+        while tick() - t < (timeout or 5) do
+            if plr.Backpack:FindFirstChild(toolName) or (plr.Character and plr.Character:FindFirstChild(toolName)) then
+                return true
+            end
+            task.wait(0.1)
+        end
+        return false
+    end
+
+    local function checkbadges()
+        local d, m = false, false
+        pcall(function()
+            d = badgeS:UserHasBadgeAsync(plr.UserId, 663807976473858)
+            m = badgeS:UserHasBadgeAsync(plr.UserId, 1605140663413534)
+        end)
+        return d, m
+    end
+
+    local initd, initm = checkbadges()
+
+    local function kick()
+        if flagend or not Toggles.kickafterreceiving.Value then return end
+        flagend = true
+        
+        task.spawn(function()
+            local timer = 0
+            while timer < 30 and not kicking do
+                task.wait(1)
+                timer += 1
+            end
+            if not kicking and Toggles.kickafterreceiving.Value then
+                kicking = true
+                plr:Kick("you already have a glove")
+            end
+        end)
+    end
+
+    local badgegroup = Tabs.main:AddLeftGroupbox('badge')
+    badgegroup:AddDropdown('GloveSelector', {
+        Values = { 'Dave', 'Mortis' },
+        Default = 1, 
+        Multi = false,
+        Text = 'choose a glove what you want'
+    })
+    badgegroup:AddDivider()
+
+    badgegroup:AddButton({
+        Text = 'start',
+        Func = function()
+            if _G.running then 
+                Library:Notify("error", 3)
+                return 
+            end
+            
+            local char = plr.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+            local hrp = char.HumanoidRootPart
+            
+            if Options.GloveSelector.Value == 'Dave' then
+                _G.running = true
+                task.spawn(function()
+                    local targetDoor = nil
+                    for _, obj in ipairs(workspace:GetChildren()) do
+                        if obj.Name == "CheckpointDoor" then
+                            local door = obj:FindFirstChild("Door")
+                            if door and door:IsA("BasePart") and (door.BrickColor.Name == "Deep orange" or door.Color == Color3.fromRGB(251, 136, 0)) then
+                                targetDoor = door
+                                break
+                            end
+                        end
+                    end
+                    
+                    if targetDoor then
+                        for _, part in ipairs(targetDoor.Parent:GetDescendants()) do
+                            if part:IsA("BasePart") then part.CanCollide = false end
+                        end
+                        hrp.CFrame = targetDoor.CFrame * CFrame.new(0, 0, -3.5)
+                        task.wait(0.4)
+                        if targetDoor:FindFirstChildOfClass("ProximityPrompt") then fireproximityprompt(targetDoor:FindFirstChildOfClass("ProximityPrompt")) end
+                        task.wait(1)
+                        
+                        local exitDoor = workspace:FindFirstChild("ExitDoor1")
+                        if exitDoor and exitDoor:FindFirstChild("teleportPoint") then
+                            char.HumanoidRootPart.CFrame = exitDoor.teleportPoint.CFrame
+                        end
+                        task.wait(1.5)
+                        
+                        local dropzone = workspace:WaitForChild("BossfightCore", 10):WaitForChild("DropZone", 10)
+                        local currentChar = plr.Character
+                        if currentChar and currentChar:FindFirstChild("HumanoidRootPart") then
+                            currentChar.HumanoidRootPart.CFrame = dropzone.CFrame
+                        end
+                    else
+                        local tp = workspace:FindFirstChild("TheOutside") and workspace.TheOutside:FindFirstChild("TowerENT1") and workspace.TheOutside.TowerENT1:FindFirstChild("teleport")
+                        if tp then hrp.CFrame = tp.CFrame end
+                        
+                        local remotes = rs:WaitForChild("Remotes")
+                        local recept = workspace:WaitForChild("JumpPoints", 10):WaitForChild("TheReception", 10)
+                        if recept then
+                            local receptPart = recept:IsA("BasePart") and recept or recept:FindFirstChildWhichIsA("BasePart")
+                            local receptPos = receptPart and receptPart.Position or recept:GetPivot().Position
+                            local touched = false
+                            
+                            if receptPart then
+                                receptPart.Touched:Connect(function(hit)
+                                    local c = plr.Character
+                                    if c and hit:IsDescendantOf(c) then touched = true end
+                                end)
+                            end
+                            
+                            while true do
+                                if Library.Unloaded then _G.running = false; return end
+                                task.wait(0.1)
+                                local currentChar = plr.Character
+                                if currentChar then
+                                    local currentHrp = currentChar:FindFirstChild("HumanoidRootPart")
+                                    if currentHrp and (touched or (currentHrp.Position - receptPos).Magnitude < 20) then break end
+                                end
+                            end
+                            
+                            local currentChar = plr.Character
+                            if currentChar and currentChar:FindFirstChild("HumanoidRootPart") then
+                                if not currentChar:FindFirstChild("Screwdriver") and not plr.Backpack:FindFirstChild("Screwdriver") then
+                                    local screw = workspace:WaitForChild("Screwdriver", 10)
+                                    if screw then
+                                        lockstate(currentChar, screw.CFrame)
+                                        task.wait(0.3)
+                                        if screw:FindFirstChildOfClass("ProximityPrompt") then fireproximityprompt(screw:FindFirstChildOfClass("ProximityPrompt")) end
+                                        waittool("Screwdriver", 5)
+                                        unlockstate(currentChar)
+                                    end
+                                end
+                                local screwInBP = plr.Backpack:WaitForChild("Screwdriver", 5)
+                                if screwInBP then screwInBP.Parent = currentChar end
+                                
+                                task.wait(0.2)
+                                local clickable = workspace:FindFirstChild("Clickable")
+                                if clickable and clickable:FindFirstChild("boltClick") then
+                                    remotes:WaitForChild("ProcessClick"):FireServer(clickable.boltClick)
+                                end
+                            end
+                            
+                            local liftready = false
+                            while not liftready do
+                                if Library.Unloaded then _G.running = false; return end
+                                task.wait(0.5)
+                                pcall(function()
+                                    if remotes:WaitForChild("GetDialogueState"):InvokeServer("Eli Vator") == 2 then liftready = true end
+                                end)
+                            end
+                            
+                            task.wait(1)
+                            local eliChar = plr.Character
+                            if eliChar and eliChar:FindFirstChild("HumanoidRootPart") then
+                                local eliHrp = eliChar.HumanoidRootPart
+                                local cam = workspace:WaitForChild("DialoguePrompts", 10):WaitForChild("Eli Vator", 10):WaitForChild("Camera", 10)
+                                if cam then
+                                    eliHrp.CFrame = cam.CFrame
+                                    task.wait(0.5)
+                                    remotes:WaitForChild("UpdateDialogueState"):FireServer("Eli Vator", 2)
+                                    task.wait(0.2)
+                                    remotes:WaitForChild("UpdateDialogueState"):FireServer("Eli Vator", 3)
+                                    
+                                    local t = tick()
+                                    while not eliHrp.Anchored do 
+                                        if Library.Unloaded then _G.running = false; return end
+                                        if tick() - t > 5 then break end
+                                        task.wait(0.1) 
+                                    end
+                                    while eliHrp.Anchored do 
+                                        if Library.Unloaded then _G.running = false; return end
+                                        if tick() - t > 10 then break end
+                                        task.wait(0.1) 
+                                    end
+                                    
+                                    task.wait(0.1)
+                                    local dz = workspace:WaitForChild("BossfightCore", 10):WaitForChild("DropZone", 10)
+                                    if dz then eliHrp.CFrame = dz.CFrame end
+                                end
+                            end
+                        end
+                    end
+                    _G.running = false
+                end)
+                
+            elseif Options.GloveSelector.Value == 'Mortis' then
+                local targetDoor = nil
+                for _, obj in ipairs(workspace:GetChildren()) do
+                    if obj.Name == "CheckpointDoor" then
+                        local door = obj:FindFirstChild("Door")
+                        if door and door:IsA("BasePart") and (door.BrickColor.Name == "Royal purple" or door.Color == Color3.fromRGB(128, 32, 188)) then
+                            targetDoor = door
+                            break
+                        end
+                    end
+                end
+                
+                if not targetDoor then
+                    Library:Notify("you don't have a hard mode", 3)
+                    return
+                end
+                
+                _G.running = true
+                task.spawn(function()
+                    for _, part in ipairs(targetDoor.Parent:GetDescendants()) do
+                        if part:IsA("BasePart") then part.CanCollide = false end
+                    end
+                    hrp.CFrame = targetDoor.CFrame * CFrame.new(0, 0, -3.5)
+                    task.wait(0.4)
+                    if targetDoor:FindFirstChildOfClass("ProximityPrompt") then fireproximityprompt(targetDoor:FindFirstChildOfClass("ProximityPrompt")) end
+                    task.wait(1)
+                    
+                    local exitDoor = workspace:FindFirstChild("ExitDoor2")
+                    if exitDoor and exitDoor:FindFirstChild("teleportPoint") then
+                        char.HumanoidRootPart.CFrame = exitDoor.teleportPoint.CFrame
+                    end
+                    
+                    local dice = nil
+                    local t = tick()
+                    while tick() - t < 20 do
+                        if Library.Unloaded then _G.running = false; return end
+                        dice = workspace:FindFirstChild("Cursed Dice")
+                        if dice then break end
+                        task.wait(0.1)
+                    end
+                    
+                    if dice then
+                        local playergui = plr:WaitForChild("PlayerGui")
+                        playergui.ChildAdded:Connect(function(child)
+                            if child.Name == "ConfirmationPrompt" then child:Destroy() end
+                        end)
+                        
+                        local currentChar = plr.Character
+                        if currentChar and currentChar:FindFirstChild("HumanoidRootPart") then
+                            lockstate(currentChar, dice.CFrame * CFrame.new(0, 0, -3))
+                            task.wait(0.5)
+                        end
+                        
+                        local dp = dice:FindFirstChildOfClass("ProximityPrompt") or dice:FindFirstChildWhichIsA("ProximityPrompt", true)
+                        if dp then
+                            fireproximityprompt(dp)
+                            task.wait(0.5)
+                            
+                            local rem = rs:WaitForChild("Remotes")
+                            if rem:FindFirstChild("ConfirmationResponse") then rem.ConfirmationResponse:FireServer("YES") end
+                            
+                            local hmStarted = false
+                            rem:WaitForChild("UpdateHealth").OnClientEvent:Connect(function(m)
+                                if m == "HARDMODE" then hmStarted = true end
+                            end)
+                            
+                            local tWait = tick()
+                            while tick() - tWait < 15 and not hmStarted do
+                                if Library.Unloaded then _G.running = false; return end
+                                task.wait(0.1)
+                            end
+                            
+                            unlockstate(currentChar)
+                            
+                            if hmStarted then
+                                local dz = workspace:WaitForChild("BossfightCore", 10):WaitForChild("DropZone", 10)
+                                if currentChar and currentChar:FindFirstChild("HumanoidRootPart") then
+                                    currentChar.HumanoidRootPart.CFrame = dz.CFrame
+                                end
+                            end
+                        end
+                        task.wait(2)
+                    end
+                    _G.running = false
+                end)
+            end
+        end,
+        DoubleClick = false
+    })
+
+    local othergroup = Tabs.main:AddRightGroupbox('other')
+    othergroup:AddToggle('antiafk', { Text = 'anti-afk', Default = true })
+    othergroup:AddToggle('skipcutscene', { Text = 'skip cutscenes', Default = true })
+    othergroup:AddToggle('kickafterreceiving', { Text = 'kick after receiving', Default = true })
+
+    local oldlighting = {
+        Brightness = lighting.Brightness,
+        ClockTime = lighting.ClockTime,
+        FogEnd = lighting.FogEnd,
+        GlobalShadows = lighting.GlobalShadows,
+        Ambient = lighting.Ambient,
+        OutdoorAmbient = lighting.OutdoorAmbient
+    }
+    othergroup:AddToggle('fullbrightnofog', { Text = 'fullbright & no fog', Default = false })
+
+    local hbnofog
+    Toggles.fullbrightnofog:OnChanged(function()
+        if Toggles.fullbrightnofog.Value then
+            hbnofog = runS.Heartbeat:Connect(function()
+                lighting.Brightness = 2
+                lighting.ClockTime = 14
+                lighting.FogEnd = 100000
+                lighting.GlobalShadows = false
+                lighting.Ambient = Color3.fromRGB(178, 178, 178)
+                lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+                for _, v in pairs(lighting:GetChildren()) do
+                    if v:IsA("Atmosphere") then v.Density = 0; v.Haze = 0 end
+                end
+            end)
+        else
+            if hbnofog then hbnofog:Disconnect(); hbnofog = nil end
+            lighting.Brightness = oldlighting.Brightness
+            lighting.ClockTime = oldlighting.ClockTime
+            lighting.FogEnd = oldlighting.FogEnd
+            lighting.GlobalShadows = oldlighting.GlobalShadows
+            lighting.Ambient = oldlighting.Ambient
+            lighting.OutdoorAmbient = oldlighting.OutdoorAmbient
+            local atm = lighting:FindFirstChildOfClass("Atmosphere")
+            if atm then atm.Density = 0.3; atm.Haze = 1 end
+        end
+    end)
+
+    local menugroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
+    menugroup:AddButton('Unload', function() Library:Unload() end)
+    menugroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true, Text = 'Menu keybind' })
+    Library.ToggleKeybind = Options.MenuKeybind 
+
+    ThemeManager:SetLibrary(Library)
+    ThemeManager:SetFolder('EvilBarzil')
+    ThemeManager:ApplyToTab(Tabs['UI Settings'])
+
+    local function updateafk()
+        local state = Toggles.antiafk.Value
+        for _, c in getconnections(plr.Idled) do
+            if state then c:Disable() else c:Enable() end
+        end
+    end
+    Toggles.antiafk:OnChanged(updateafk)
+    task.spawn(updateafk)
+
+    task.spawn(function()
+        while task.wait(0.5) do
+            if Toggles.kickafterreceiving.Value and not kicking then
+                local curd, curm = checkbadges()
+                local newd = curd and not initd
+                local newm = curm and not initm
+                if newd or newm then
+                    kicking = true
+                    local reason = newd and "you got the dave glove" or "you got the mortis glove"
+                    plr:Kick(reason)
+                    break
+                end
+            end
+        end
+    end)
+
+    local cutscenemanager = require(rf:WaitForChild("Dependencies"):WaitForChild("CutsceneManager"))
+    local cutscenecomplete = rs:WaitForChild("Remotes"):WaitForChild("CutsceneComplete")
+    local originalPlayCutscene = cutscenemanager.PlayCutscene
+
+    cutscenemanager.PlayCutscene = function(...)
+        local name = ({...})[2] or ({...})[1]
+        if Toggles.skipcutscene.Value and (name == "DaveTransformCutscene" or name == "DaveDefeatCutscene") then
+            if name == "DaveDefeatCutscene" then
+                flagph4 = false
+                readyph4 = false
+                local char = plr.Character
+                if char then
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    if hum then hum.AutoRotate = true end
+                end
+                kick()
+            end
+            task.wait(0.05)
+            cutscenecomplete:FireServer(name)
+            return
+        end
+        return originalPlayCutscene(...)
+    end
+
+    local basecfr = CFrame.new(4870.79932, 5586.5752, -352.066376, -0.0242236853, -1.0331588e-08, -0.999706566, -1.35515652e-08, 1, -1.00062554e-08, 0.999706566, 1.33051996e-08, -0.0242236853)
+    local ystep = 54.5 
+    local sspots = {
+        {Color = Color3.fromRGB(255, 255, 255), CFrame = basecfr * CFrame.new(0, 0, 0)},
+        {Color = Color3.fromRGB(255, 0, 0), CFrame = basecfr * CFrame.new(0, ystep * 1, 0)}, 
+        {Color = Color3.fromRGB(255, 255, 0), CFrame = basecfr * CFrame.new(0, ystep * 2, 0)},
+        {Color = Color3.fromRGB(0, 255, 0), CFrame = basecfr * CFrame.new(0, ystep * 3, 0)},
+        {Color = Color3.fromRGB(0, 0, 255), CFrame = basecfr * CFrame.new(0, ystep * 4, 0)}
+    }
+
+    local dodgeFolder = Instance.new("Folder")
+    dodgeFolder.Name = "AutoDodgeSpots"
+    dodgeFolder.Parent = workspace
+
+    local function setSmoothSurface(part)
+        part.TopSurface = Enum.SurfaceType.Smooth
+        part.BottomSurface = Enum.SurfaceType.Smooth
+        part.FrontSurface = Enum.SurfaceType.Smooth
+        part.BackSurface = Enum.SurfaceType.Smooth
+        part.LeftSurface = Enum.SurfaceType.Smooth
+        part.RightSurface = Enum.SurfaceType.Smooth
+    end
+
+    local function spawnsspots(idx)
+        dodgeFolder:ClearAllChildren()
+        local spotstospawn = idx and {idx} or {1, 2, 3, 4, 5}
+        for _, i in ipairs(spotstospawn) do
+            local spot = sspots[i]
+            local p = Instance.new("Part")
+            p.Name = "SafeSpot_"..i
+            p.Size = Vector3.new(175, 5, 145)
+            p.CFrame = spot.CFrame
+            p.Color = spot.Color
+            p.Transparency = 0.6
+            p.Material = Enum.Material.SmoothPlastic
+            p.Anchored = true
+            p.CanCollide = true
+            setSmoothSurface(p)
+            p.Parent = dodgeFolder
+            
+            local wheight = 15
+            local wYoffset = 10 
+            
+            local w1 = Instance.new("Part")
+            w1.Size = Vector3.new(175, wheight, 5)
+            w1.CFrame = spot.CFrame * CFrame.new(0, wYoffset, 72.5)
+            w1.Color = spot.Color
+            w1.Transparency = 0.6
+            w1.Material = Enum.Material.SmoothPlastic
+            w1.Anchored = true
+            w1.CanCollide = true
+            setSmoothSurface(w1)
+            w1.Parent = dodgeFolder
+            
+            local w2 = Instance.new("Part")
+            w2.Size = Vector3.new(175, wheight, 5)
+            w2.CFrame = spot.CFrame * CFrame.new(0, wYoffset, -72.5)
+            w2.Color = spot.Color
+            w2.Transparency = 0.6
+            w2.Material = Enum.Material.SmoothPlastic
+            w2.Anchored = true
+            w2.CanCollide = true
+            setSmoothSurface(w2)
+            w2.Parent = dodgeFolder
+            
+            local w3 = Instance.new("Part")
+            w3.Size = Vector3.new(5, wheight, 145)
+            w3.CFrame = spot.CFrame * CFrame.new(87.5, wYoffset, 0)
+            w3.Color = spot.Color
+            w3.Transparency = 0.6
+            w3.Material = Enum.Material.SmoothPlastic
+            w3.Anchored = true
+            w3.CanCollide = true
+            setSmoothSurface(w3)
+            w3.Parent = dodgeFolder
+            
+            local w4 = Instance.new("Part")
+            w4.Size = Vector3.new(5, wheight, 145)
+            w4.CFrame = spot.CFrame * CFrame.new(-87.5, wYoffset, 0)
+            w4.Color = spot.Color
+            w4.Transparency = 0.6
+            w4.Material = Enum.Material.SmoothPlastic
+            w4.Anchored = true
+            w4.CanCollide = true
+            setSmoothSurface(w4)
+            w4.Parent = dodgeFolder
+        end
+    end
+
+    local function getSurfaceCFrame(spotCFrame) return spotCFrame * CFrame.new(0, 5.5, 0) end
+
+    local function nextspot(hrp)
+        curspotindex = curspotindex + 1
+        if curspotindex > #sspots then curspotindex = 1 end
+        hrp.CFrame = getSurfaceCFrame(sspots[curspotindex].CFrame)
+    end
+
+    local function runph3()
+        local char = plr.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        local hrp = char.HumanoidRootPart
+        hrp.Anchored = false
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and not part.CanCollide then part.CanCollide = true end
+        end
+        spawnsspots(2)
+        curspotindex = 2
+        local oldCF = getSurfaceCFrame(sspots[2].CFrame)
+        hrp.CFrame = oldCF
+        task.wait(0.5)
+
+        local c4count = 0
+        while c4count < 4 do
+            local currentC4 = nil
+            for _, v in pairs(workspace:GetChildren()) do
+                if v.Name == "C4" then currentC4 = v; break end
+            end
+            if currentC4 then
+                lockstate(char, currentC4.CFrame)
+                task.wait(0.3)
+                if currentC4:FindFirstChildOfClass("ProximityPrompt") then fireproximityprompt(currentC4:FindFirstChildOfClass("ProximityPrompt")) end
+                waittool("C4", 5)
+                unlockstate(char)
+                
+                local t = tick()
+                while currentC4.Parent and tick() - t < 2 do task.wait(0.1) end
+                if not currentC4.Parent then c4count = c4count + 1 end
+                task.wait(0.2)
+            else
+                if c4count > 0 then break end
+                task.wait(0.1)
+            end
+        end
+        hrp.CFrame = oldCF
+        task.wait(0.2)
+
+        local ghosts = workspace:FindFirstChild("ExplosiveGhosts") or workspace:WaitForChild("ExplosiveGhosts", 15)
+        if ghosts then
+            local timeout = tick() + 15
+            while #ghosts:GetChildren() == 0 and tick() < timeout do task.wait(0.1) end
+            for _, v in pairs(ghosts:GetChildren()) do
+                if v:IsA("BasePart") and v:FindFirstChild("SurfaceAppearance") == nil then
+                    local c4Tool = plr.Backpack:FindFirstChild("C4") or char:FindFirstChild("C4")
+                    if c4Tool and c4Tool.Parent == plr.Backpack then
+                        char.Humanoid:EquipTool(c4Tool)
+                        task.wait(0.2)
+                    end
+                    lockstate(char, v.CFrame)
+                    task.wait(0.3)
+                    if v:FindFirstChildOfClass("ProximityPrompt") then fireproximityprompt(v:FindFirstChildOfClass("ProximityPrompt")) end
+                    task.wait(0.2)
+                    unlockstate(char)
+                    hrp.CFrame = oldCF
+                    task.wait(0.2)
+                end
+            end
+        end
+        task.wait(0.2)
+        hrp.CFrame = getSurfaceCFrame(sspots[2].CFrame)
+    end
+
+    rs:WaitForChild("Remotes"):WaitForChild("FadeMusic").OnClientEvent:Connect(function(music)
+        if music == "Phase1Loop" then
+            flagph1, flagph2, flagph3, flagph4, readyph4 = true, false, false, false, false
+            spawnsspots() 
+            curspotindex = 1
+            local char = plr.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = getSurfaceCFrame(sspots[1].CFrame)
+            end
+        elseif music == "Phase2Loop" then
+            flagph1, flagph2, flagph3, flagph4, readyph4 = false, true, false, false, false
+            spawnsspots(2) 
+            curspotindex = 2
+            local char = plr.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = getSurfaceCFrame(sspots[2].CFrame)
+            end
+        elseif music == "Phase3Loop" then
+            flagph1, flagph2, flagph3, flagph4, readyph4 = false, false, true, false, false
+            task.spawn(runph3)
+        else
+            flagph1, flagph2, flagph3 = false, false, false
+        end
+    end)
+
+    local jdupd = rs:WaitForChild("Remotes"):WaitForChild("JumpDisplayUpdate")
+    local processjump = rs:WaitForChild("Remotes"):WaitForChild("ProcessJump")
+    local curjumpcount = 0
+    local jumping = false
+
+    jdupd.OnClientEvent:Connect(function(count)
+        if flagph2 then
+            curjumpcount = count
+            if count == 5 and not jumping then
+                jumping = true
+                task.spawn(function()
+                    while jumping and flagph2 and curjumpcount > 0 do
+                        processjump:FireServer()
+                        task.wait(0.1)
+                    end
+                    jumping = false
+                end)
+            elseif count == 0 then jumping = false end
+        end
+    end)
+
+    local PlatformExplosionEvent = rs:WaitForChild("Remotes"):WaitForChild("PlatformExplosionEvent")
+    local ph4boxcenter = CFrame.new(4866.88184, 5617.30957, -221.85939, 0.993935764, 1.26201494e-08, -0.109962218, -1.07546567e-08, 1, 1.75579551e-08, 0.109962218, -1.62688742e-08, 0.993935764)
+
+    local function spawnph4box()
+        for _, child in pairs(dodgeFolder:GetChildren()) do
+            if child.Name == "Phase4BoxPart" then child:Destroy() end
+        end
+
+        local function createw(cf, size)
+            local p = Instance.new("Part")
+            p.Name = "Phase4BoxPart"
+            p.Size = size
+            p.CFrame = cf
+            p.Anchored = true
+            p.CanCollide = true
+            p.Color = Color3.fromRGB(100, 100, 100)
+            p.Transparency = 0.5
+            p.Material = Enum.Material.SmoothPlastic
+            setSmoothSurface(p)
+            p.Parent = dodgeFolder
+        end
+
+        createw(ph4boxcenter * CFrame.new(0, -12.5, 0), Vector3.new(25, 1, 25)) 
+        createw(ph4boxcenter * CFrame.new(0, 12.5, 0), Vector3.new(25, 1, 25))  
+        createw(ph4boxcenter * CFrame.new(0, 0, 12.5), Vector3.new(25, 25, 1))  
+        createw(ph4boxcenter * CFrame.new(0, 0, -12.5), Vector3.new(25, 25, 1)) 
+        createw(ph4boxcenter * CFrame.new(12.5, 0, 0), Vector3.new(1, 25, 25))  
+        createw(ph4boxcenter * CFrame.new(-12.5, 0, 0), Vector3.new(1, 25, 25)) 
+    end
+
+    PlatformExplosionEvent.OnClientEvent:Connect(function()
+        flagph3, flagph4, readyph4 = false, true, false
+
+        task.spawn(function()
+            local char = plr.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+            local hrp = char.HumanoidRootPart
+
+            local bombGloveFolder = workspace:WaitForChild("BombGlove", 15)
+            if bombGloveFolder then
+                local glove = bombGloveFolder:WaitForChild("Glove", 15)
+                if glove then
+                    lockstate(char, glove.CFrame)
+                    task.wait(0.3)
+                    if glove:FindFirstChildOfClass("ProximityPrompt") then fireproximityprompt(glove:FindFirstChildOfClass("ProximityPrompt")) end
+                    waittool("Bomb", 5)
+                    unlockstate(char)
+                end
+            end
+
+            spawnsspots(2)
+            curspotindex = 2
+            hrp.CFrame = getSurfaceCFrame(sspots[2].CFrame)
+
+            task.wait(3)
+            spawnph4box()
+            hrp.CFrame = ph4boxcenter
+            
+            local bossStorage = workspace:FindFirstChild("bossStorage")
+            local head = bossStorage and bossStorage:FindFirstChild("head")
+            if head then
+                local bombtarget = workspace:FindFirstChild("BossHeadTarget")
+                if not bombtarget then
+                    bombtarget = Instance.new("Part")
+                    bombtarget.Name = "BossHeadTarget"
+                    bombtarget.Color = Color3.fromRGB(255, 255, 255)
+                    bombtarget.Transparency = 1
+                    bombtarget.CanCollide = false
+                    bombtarget.Size = Vector3.new(15, 15, 15)
+                    bombtarget.Parent = workspace
+                end
+                bombtarget.CFrame = head.CFrame
+                local w = Instance.new("WeldConstraint")
+                w.Part0 = head
+                w.Part1 = bombtarget
+                w.Parent = bombtarget
+            end
+            
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            if humanoid then humanoid.AutoRotate = false end
+            readyph4 = true
+        end)
+    end)
+
+    runS.Heartbeat:Connect(function()
+        if flagph4 and readyph4 then
+            local char = plr.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hrp = char.HumanoidRootPart
+                local bombtarget = workspace:FindFirstChild("BossHeadTarget")
+                if bombtarget then
+                    hrp.AssemblyLinearVelocity = Vector3.zero
+                    hrp.AssemblyAngularVelocity = Vector3.zero
+                    hrp.CFrame = CFrame.lookAt(ph4boxcenter.Position, bombtarget.Position)
+                end
+            end
+        end
+    end)
+
+    task.spawn(function()
+        local activebomb = nil
+        local lastthrow = 0
+        local bombremote = rs:WaitForChild("Remotes"):WaitForChild("BombThrow")
+        local glovecooldown = require(rf:WaitForChild("Dependencies"):WaitForChild("GloveCommonClient"))
+
+        while true do
+            task.wait()
+            if flagph4 and readyph4 then
+                local char = plr.Character
+                if char then
+                    local bombTool = char:FindFirstChild("Bomb") or plr.Backpack:FindFirstChild("Bomb")
+                    if bombTool then
+                        if not activebomb then
+                            if tick() - lastthrow > 5.5 then
+                                if bombTool.Parent == plr.Backpack then char.Humanoid:EquipTool(bombTool) end
+                                task.wait(0.15)
+                                bombremote:FireServer("Ebutton")
+                                lastthrow = tick()
+                                task.wait(0.2) 
+                                
+                                local bombsFolder = workspace:FindFirstChild("Bombs")
+                                if bombsFolder then
+                                    local bombname = plr.Name .. "_b\195\184mb"
+                                    local bomb = bombsFolder:FindFirstChild(bombname)
+                                    if bomb then
+                                        activebomb = bomb
+                                    else
+                                        for _, b in pairs(bombsFolder:GetChildren()) do
+                                            if b.Name:match(plr.Name) then activebomb = b; break end
+                                        end
+                                    end
+                                end
+                            end
+                        else
+                            if activebomb and activebomb.Parent then
+                                local bombtarget = workspace:FindFirstChild("BossHeadTarget")
+                                local explodeflag = false
+                                if bombtarget then
+                                    local bombpos = activebomb:IsA("Model") and activebomb:GetPivot().Position or activebomb.Position
+                                    if (bombpos - bombtarget.Position).Magnitude < 15 then explodeflag = true end
+                                end
+                                if explodeflag then
+                                    bombremote:FireServer("Ebutton")
+                                    local currentTool = char:FindFirstChildOfClass('Tool')
+                                    if currentTool then
+                                        pcall(function() glovecooldown:Cooldown(currentTool, 5, "Detonation", "E_ABILITY") end)
+                                    end
+                                    task.wait(0.5)
+                                    activebomb = nil
+                                    lastthrow = tick()
+                                end
+                            else
+                                activebomb = nil
+                                lastthrow = tick()
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    task.spawn(function()
+        local lasthit = 0
+        local ph1state = "idle"
+        local slappedhand = nil
+        local slapstart = 0
+        
+        while true do
+            task.wait(0.1)
+            if flagph1 then
+                local char = plr.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local hrp = char.HumanoidRootPart
+                    local attacknear = false
+                    
+                    for _, obj in ipairs(workspace:GetChildren()) do
+                        if obj:IsA("BasePart") and obj.Name == "Part" and obj.BrickColor.Name == "Really red" and obj.Material == Enum.Material.Neon then
+                            if (obj.Position - hrp.Position).Magnitude < 50 then
+                                attacknear = true
+                                break
+                            end
+                        end
+                    end
+
+                    local mimic = nil
+                    if workspace:FindFirstChild("bossStorage") and workspace.bossStorage:FindFirstChild("leftHand") and workspace.bossStorage.leftHand:FindFirstChild("PointerMimic") then
+                        local m = workspace.bossStorage.leftHand.PointerMimic
+                        if m:FindFirstChild("TouchInterest") then mimic = m end
+                    end
+
+                    if attacknear then
+                        if ph1state ~= "dodging" then
+                            hrp.Anchored = false
+                            nextspot(hrp)
+                            ph1state = "dodging"
+                            slappedhand = nil
+                        end
+                    elseif mimic then
+                        local lantern = char:FindFirstChild("Lantern") or plr.Backpack:FindFirstChild("Lantern")
+                        if lantern and lantern.Parent == plr.Backpack then
+                            char.Humanoid:EquipTool(lantern)
+                            task.wait(0.1)
+                            lantern = char:FindFirstChild("Lantern")
+                        end
+
+                        if lantern then
+                            if ph1state ~= "attacking" or mimic ~= slappedhand then
+                                hrp.Anchored = true
+                                slapstart = tick()
+                                slappedhand = mimic
+                                ph1state = "attacking"
+                            end
+                            
+                            local timediff = tick() - slapstart
+                            local jumpoff = 0
+                            if timediff < 0.2 then jumpoff = 5 * (1 - (timediff / 0.2)) end
+                            
+                            hrp.CFrame = mimic.CFrame * CFrame.new(0, jumpoff, 6.8)
+                            
+                            if tick() - lasthit >= 0.2 then
+                                lantern:Activate()
+                                lasthit = tick()
+                            end
+                        end
+                    else
+                        if ph1state ~= "idle" then
+                            hrp.Anchored = false
+                            hrp.CFrame = getSurfaceCFrame(sspots[curspotindex].CFrame)
+                            ph1state = "idle"
+                            slappedhand = nil
+                        end
+                    end
+                end
+            else
+                ph1state = "idle"
+                slappedhand = nil
+            end
+        end
+    end)
+
+    task.spawn(function()
+        local curnail = nil
+        local firstrotation = nil
+        local locktime = 0
+        local lasthit = 0
+        local launchednails = {}
+        local nailspawntimes = {}
+        local searchtime = 0
+        local flagdodgelight = false
+
+        while true do
+            task.wait() 
+            if flagph2 then
+                local char = plr.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local hrp = char.HumanoidRootPart
+                    local humanoid = char:FindFirstChildOfClass("Humanoid")
+                    
+                    local lightning = workspace:FindFirstChild("lightningVFX")
+                    if lightning then
+                        if (lightning.Position - hrp.Position).Magnitude < 13 then flagdodgelight = true end
+                    else
+                        flagdodgelight = false
+                    end
+
+                    if flagdodgelight then
+                        curnail = nil
+                        firstrotation = nil
+                        if not hrp.Anchored then hrp.Anchored = true end
+                        hrp.AssemblyLinearVelocity = Vector3.zero
+                        hrp.AssemblyAngularVelocity = Vector3.zero
+                        hrp.CFrame = getSurfaceCFrame(sspots[2].CFrame)
+                        for _, part in pairs(char:GetDescendants()) do
+                            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and not part.CanCollide then part.CanCollide = true end
+                        end
+                    else
+                        local nailcount = 0
+                        if workspace:FindFirstChild("bossStorage") then
+                            for _, v in pairs(workspace.bossStorage:GetChildren()) do
+                                if (v.Name:find("thicc") or v.Name == "nail") and v:FindFirstChild("object") then
+                                    nailcount = nailcount + 1
+                                    if not nailspawntimes[v] then nailspawntimes[v] = tick() end
+                                end
+                            end
+                        end
+
+                        if curnail then
+                            local obj = curnail:FindFirstChild("object")
+                            local rotated = false
+                            
+                            if not obj or not obj.Parent then
+                                rotated = true
+                            elseif nailcount <= 3 then
+                                rotated = true
+                            elseif firstrotation and (tick() - locktime > 0.2) then
+                                local currotation = obj.Orientation
+                                local diffx = math.abs((currotation.X - firstrotation.X + 180) % 360 - 180)
+                                local diffy = math.abs((currotation.Y - firstrotation.Y + 180) % 360 - 180)
+                                local diffz = math.abs((currotation.Z - firstrotation.Z + 180) % 360 - 180)
+                                if diffx > 0.1 or diffy > 0.1 or diffz > 0.1 then rotated = true end
+                            end
+                            
+                            if rotated then
+                                table.insert(launchednails, curnail)
+                                curnail = nil
+                                firstrotation = nil
+                                if not hrp.Anchored then hrp.Anchored = true end
+                                hrp.AssemblyLinearVelocity = Vector3.zero
+                                hrp.AssemblyAngularVelocity = Vector3.zero
+                                hrp.CFrame = getSurfaceCFrame(sspots[2].CFrame)
+                                for _, part in pairs(char:GetDescendants()) do
+                                    if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and not part.CanCollide then part.CanCollide = true end
+                                end
+                                searchtime = tick() + 0.3
+                            else
+                                local lantern = char:FindFirstChild("Lantern") or plr.Backpack:FindFirstChild("Lantern")
+                                if lantern and lantern.Parent == plr.Backpack then
+                                    char.Humanoid:EquipTool(lantern)
+                                    task.wait(0.1)
+                                    lantern = char:FindFirstChild("Lantern")
+                                end
+
+                                if lantern and obj and obj.Parent then
+                                    if hrp.Anchored then hrp.Anchored = false end
+                                    for _, part in pairs(char:GetDescendants()) do
+                                        if part:IsA("BasePart") then
+                                            part.CanCollide = false
+                                            pcall(function() part.CollisionGroup = "IgnoreCharacters" end)
+                                        end
+                                    end
+                                    if humanoid then
+                                        humanoid.PlatformStand = false
+                                        pcall(function() humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) end)
+                                    end
+                                    hrp.CFrame = obj.CFrame * CFrame.new(0, -2, 0) * CFrame.Angles(math.rad(90), 0, 0)
+                                    hrp.AssemblyLinearVelocity = Vector3.zero
+                                    hrp.AssemblyAngularVelocity = Vector3.zero
+                                    if tick() - lasthit > 0.1 then
+                                        lantern:Activate()
+                                        lasthit = tick()
+                                    end
+                                else
+                                    curnail = nil
+                                end
+                            end
+                        else
+                            if not hrp.Anchored then hrp.Anchored = true end
+                            hrp.AssemblyLinearVelocity = Vector3.zero
+                            hrp.AssemblyAngularVelocity = Vector3.zero
+                            hrp.CFrame = getSurfaceCFrame(sspots[2].CFrame)
+                            for _, part in pairs(char:GetDescendants()) do
+                                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and not part.CanCollide then part.CanCollide = true end
+                            end
+                            
+                            for i = #launchednails, 1, -1 do
+                                if not launchednails[i] or not launchednails[i].Parent then table.remove(launchednails, i) end
+                            end
+                            for k, v in pairs(nailspawntimes) do
+                                if not k.Parent then nailspawntimes[k] = nil end
+                            end
+
+                            if nailcount > 3 and tick() >= searchtime then
+                                if workspace:FindFirstChild("bossStorage") then
+                                    for _, v in pairs(workspace.bossStorage:GetChildren()) do
+                                        if (v.Name:find("thicc") or v.Name == "nail") and v:FindFirstChild("object") then
+                                            local inblacklist = false
+                                            for _, oldnail in ipairs(launchednails) do
+                                                if oldnail == v then inblacklist = true; break end
+                                            end
+                                            
+                                            local nailobj = v:FindFirstChild("object")
+                                            if not inblacklist and nailobj then
+                                                local animationcontrollernail = v:FindFirstChild("AnimationController")
+                                                local animator = animationcontrollernail and animationcontrollernail:FindFirstChild("Animator")
+                                                local spawntimenail = nailspawntimes[v] or tick()
+                                                local oldenough = (tick() - spawntimenail > 1.5)
+                                                
+                                                if oldenough and animator and #animator:GetPlayingAnimationTracks() == 0 then
+                                                    curnail = v
+                                                    firstrotation = nailobj.Orientation
+                                                    locktime = tick()
+                                                    break
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            else
+                if not flagph3 and not flagph4 then
+                    local char = plr.Character
+                    if char then
+                        local hrp = char:FindFirstChild("HumanoidRootPart")
+                        local humanoid = char:FindFirstChildOfClass("Humanoid")
+                        if humanoid then humanoid.AutoRotate = true end 
+                        if hrp then hrp.Anchored = false end
+                        for _, part in pairs(char:GetDescendants()) do
+                            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and not part.CanCollide then part.CanCollide = true end
+                        end
+                    end
+                end
+                curnail = nil
+                firstrotation = nil
+                launchednails = {}
+                nailspawntimes = {}
+                searchtime = 0
+            end
+        end
+    end)
+end
