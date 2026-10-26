@@ -46,8 +46,7 @@ MiscSection:NewToggle("Auto Click Tycoon", "Clicking Button On Tycoon", function
         task.spawn(function()
             while _G.AutoTycoonEnabled do
                 if clickDetectorObj then
-                    fireclickdetector(clickDetectorObj, 0)
-                    fireclickdetector(clickDetectorObj, 1)
+                    fireclickdetector(clickDetectorObj)
                 end
                 task.wait()
             end
