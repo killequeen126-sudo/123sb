@@ -234,8 +234,7 @@ elseif game.PlaceId == 18550498098 then
 
             for _, item in pairs(ws:GetDescendants()) do
                 if item.Name == 'ShackLever' and item:FindFirstChild('ClickDetector') then
-                    fireclickdetector(item.ClickDetector, 0)
-                    fireclickdetector(item.ClickDetector, 1)
+                    fireclickdetector(item.ClickDetector)
                 end
             end
 
