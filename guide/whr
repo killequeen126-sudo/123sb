@@ -345,8 +345,7 @@ local function start()
 
         for _, item in pairs(ws:GetDescendants()) do
             if item.Name == 'ShackLever' and item:FindFirstChild('ClickDetector') then
-                fireclickdetector(item.ClickDetector, 0)
-                fireclickdetector(item.ClickDetector, 1)
+                fireclickdetector(item.ClickDetector)
             end
         end
 
